@@ -1,0 +1,194 @@
+= Native Connectors Test Suite
+:author: Jan Kašík
+:toc: left
+
+== Overview
+
+Test suite for AJP native connectors (isapi_redirect, mod_jk, mod_proxy_ajp) with WildFly/EAP.
+
+Automated test coverage for native AJP connectors with WildFly/EAP, including authentication
+propagation via the Elytron EXTERNAL mechanism.
+
+== Scope
+
+=== Connectors to test
+
+[cols="1,1,2,1"]
+|===
+| Connector | Platform | Protocol | Source
+
+| isapi_redirect 1.2.46
+| Windows (IIS 10)
+| AJP
+| JBCS
+
+| mod_jk
+| Linux (httpd)
+| AJP
+| JBCS
+
+| mod_proxy_ajp
+| Linux (httpd)
+| AJP
+| httpd built-in
+|===
+
+=== Test scenarios
+
+==== 1. REMOTE_USER / authentication propagation
+
+Proxy authenticates user → AJP carries `REMOTE_USER` → Elytron EXTERNAL mechanism picks it up.
+
+Three cases:
+
+* Authenticated user with correct role → 200
+* No authentication → 403
+* Authenticated user with wrong role → 403
+
+The Elytron EXTERNAL mechanism
+configuration requires:
+
+* `http-authentication-factory` with `mechanism-name=EXTERNAL`
+* `filesystem-realm` (or LDAP/JDBC realm) for role mapping
+* `application-security-domain` wired to Undertow
+* `web.xml` with `<auth-method>EXTERNAL</auth-method>` in `<login-config>`
+
+==== 2. Basic connectivity
+
+Request proxied through connector, response returned correctly.
+
+==== 3. Session stickiness
+
+AJP session affinity via JVMRoute across multiple backend workers.
+
+==== 4. Failover
+
+Backend goes down, connector handles gracefully (error page, failover to another backend).
+
+== Technical notes
+
+=== IIS + isapi_redirect
+
+* IIS Docker images are **Windows containers only** (`mcr.microsoft.com/windows/servercore/iis`) — cannot run on Linux hosts
+* isapi_redirect is NOT a mod_cluster balancer — it's a mod_jk-style direct AJP proxy with `workers.properties`
+* No MCMP, no cluster discovery, no dynamic worker registration
+* Requires Windows CI runner (GitHub Actions `windows-latest`), IIS installed via PowerShell
+
+=== AJP REMOTE_USER protocol
+
+* `SetEnv AJP_REMOTE_USER` does NOT set the AJP protocol's `remote_user` field — it creates a request attribute
+* The EXTERNAL mechanism reads the AJP protocol field, which is only set when httpd actually authenticates the user (e.g. mod_auth_basic)
+* For isapi_redirect, IIS Windows Authentication sets `REMOTE_USER` natively
+
+=== Elytron EXTERNAL mechanism
+
+* Proposal: https://github.com/wildfly/wildfly-proposals/blob/main/elytron/ELY-1921-http-external-mechanism.adoc
+* Blog: https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/
+
+== Infrastructure
+
+=== Linux connectors (mod_jk, mod_proxy_ajp)
+
+* httpd from system packages or JBCS ZIP
+* mod_jk from JBCS
+* mod_proxy_ajp built into httpd
+* WildFly from ZIP or Docker
+
+=== Windows connector (isapi_redirect)
+
+* IIS installed via `Install-WindowsFeature Web-Server` (PowerShell)
+* isapi_redirect.dll from JBCS
+* WildFly from ZIP (native mode)
+* CI: GitHub Actions `windows-latest` runner
+
+== Running the tests
+
+=== Prerequisites
+
+* JDK 17+
+* WildFly ZIP (or EAP) — set via `-Dwildfly.zip.path` or place in `distributions/`
+* *Linux:* `httpd` and `htpasswd` installed (`dnf install httpd httpd-tools` / `apt install apache2 apache2-utils`)
+* *Windows:* IIS with Basic Auth + ISAPI features, `isapi_redirect.dll` from JBCS — set via `-Disapi.redirect.dll.path`
+
+=== Linux (mod_proxy_ajp)
+
+[source,bash]
+----
+mvn test -Dwildfly.zip.path=/path/to/wildfly-39.0.1.Final.zip
+----
+
+=== Windows (IIS + isapi_redirect)
+
+[source,cmd]
+----
+mvn test -Dwildfly.zip.path=C:\path\to\wildfly-39.0.1.Final.zip ^
+         -Disapi.redirect.dll.path=C:\path\to\isapi_redirect.dll
+----
+
+IIS features must be installed beforehand:
+
+[source,powershell]
+----
+Install-WindowsFeature Web-Server, Web-Basic-Auth, Web-ISAPI-Filter, Web-ISAPI-Ext
+----
+
+== Architecture
+
+=== Test infrastructure
+
+[cols="1,2"]
+|===
+| Component | Description
+
+| `AjpProxy`
+| Interface for AJP reverse proxies. `AjpProxy.create()` auto-selects `HttpdAjpProxy` (Linux) or `IISIsapiProxy` (Windows).
+
+| `ConnectorTestExtension`
+| JUnit 5 extension. Starts/stops a WildFly worker per test, injects `WildFlyWorker` and `HttpClient`.
+
+| `AjpAuthConfigurator`
+| Configures Elytron EXTERNAL mechanism with filesystem-realm (hardcoded user/role entries).
+
+| `LdapAuthConfigurator`
+| Configures Elytron EXTERNAL mechanism with ldap-realm (roles resolved from LDAP group membership).
+
+| `EmbeddedLdapServer`
+| In-memory LDAP server (UnboundID) with test users in `ou=People` and role groups in `ou=Groups`.
+
+| `SecuredAppBuilder`
+| Builds `secured.war` with EXTERNAL auth-method and `gooduser` role constraint.
+|===
+
+=== Test flow
+
+. `ConnectorTestExtension` starts a native WildFly worker
+. Test configures Elytron (EXTERNAL mechanism + realm)
+. Test adds an AJP listener to WildFly
+. Test deploys `secured.war`
+. Test creates and starts an `AjpProxy` (httpd or IIS)
+. Proxy authenticates user, sets `REMOTE_USER`, forwards via AJP
+. Elytron EXTERNAL mechanism picks up `REMOTE_USER`, resolves roles from realm
+. Assertions verify HTTP status and response body
+
+=== Test classes
+
+[cols="1,2"]
+|===
+| Test | What it validates
+
+| `AjpAuthPropagationTest`
+| REMOTE_USER propagation with filesystem-realm (hardcoded users). Proves the basic AJP + Elytron EXTERNAL path works.
+
+| `LdapAuthPropagationTest`
+| REMOTE_USER propagation with ldap-realm (roles from LDAP group membership). Proves the same path works when identity/role resolution is delegated to a directory server, as in Active Directory environments.
+|===
+
+Both test classes validate three scenarios:
+
+* Authenticated user with correct role → 200
+* No authentication (no REMOTE_USER) → 403
+* Authenticated user with wrong role → 403
+
+== Status
+
+Six tests validate REMOTE_USER propagation across two realm types (filesystem, LDAP) and two platforms (Linux/httpd, Windows/IIS).
