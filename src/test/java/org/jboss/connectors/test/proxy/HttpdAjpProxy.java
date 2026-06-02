@@ -74,9 +74,23 @@ public class HttpdAjpProxy implements AjpProxy {
         String httpdBin = findHttpdBinary();
         Path configFile = confDir.resolve("httpd.conf");
 
+        Map<String, String> env = new java.util.HashMap<>();
+        String httpdHome = System.getProperty("httpd.home");
+        if (httpdHome != null) {
+            Path libDir = Path.of(httpdHome, "lib");
+            if (libDir.toFile().isDirectory()) {
+                String existing = System.getenv("LD_LIBRARY_PATH");
+                String ldPath = libDir.toAbsolutePath().toString();
+                if (existing != null && !existing.isEmpty()) {
+                    ldPath = ldPath + ":" + existing;
+                }
+                env.put("LD_LIBRARY_PATH", ldPath);
+            }
+        }
+
         processManager = new NativeProcessManager("httpd-proxy",
                 List.of(httpdBin, "-f", configFile.toAbsolutePath().toString(), "-DFOREGROUND"),
-                workDir, Map.of());
+                workDir, env);
         processManager.start();
 
         // httpd doesn't emit a clear startup message — wait briefly and check it's alive
@@ -157,26 +171,47 @@ public class HttpdAjpProxy implements AjpProxy {
     }
 
     private static String findHttpdBinary() {
+        String httpdHome = System.getProperty("httpd.home");
+        if (httpdHome != null) {
+            Path bin = Path.of(httpdHome, "sbin", "httpd");
+            if (bin.toFile().exists()) {
+                return bin.toAbsolutePath().toString();
+            }
+        }
         for (String candidate : new String[]{"/usr/sbin/httpd", "/usr/sbin/apache2",
                 "/usr/local/apache2/bin/httpd", "httpd", "apache2"}) {
             if (Path.of(candidate).toFile().exists() || isOnPath(candidate)) {
                 return candidate;
             }
         }
-        throw new RuntimeException("httpd/apache2 binary not found. Install httpd or apache2.");
+        throw new RuntimeException("httpd not found. Set -Dhttpd.home or install httpd.");
     }
 
     private static String findHtpasswdBinary() {
+        String httpdHome = System.getProperty("httpd.home");
+        if (httpdHome != null) {
+            Path bin = Path.of(httpdHome, "sbin", "htpasswd");
+            if (bin.toFile().exists()) {
+                return bin.toAbsolutePath().toString();
+            }
+        }
         for (String candidate : new String[]{"/usr/bin/htpasswd", "/usr/local/apache2/bin/htpasswd",
                 "htpasswd"}) {
             if (Path.of(candidate).toFile().exists() || isOnPath(candidate)) {
                 return candidate;
             }
         }
-        throw new RuntimeException("htpasswd binary not found. Install apache2-utils or httpd-tools.");
+        throw new RuntimeException("htpasswd not found. Set -Dhttpd.home or install httpd-tools.");
     }
 
     private static String findModulesDir() {
+        String httpdHome = System.getProperty("httpd.home");
+        if (httpdHome != null) {
+            Path modules = Path.of(httpdHome, "modules");
+            if (modules.toFile().isDirectory()) {
+                return modules.toAbsolutePath().toString();
+            }
+        }
         for (String candidate : new String[]{"/usr/lib64/httpd/modules", "/usr/lib/apache2/modules",
                 "/usr/local/apache2/modules"}) {
             if (Path.of(candidate).toFile().isDirectory()) {
