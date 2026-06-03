@@ -29,7 +29,7 @@ Connectors under test:
 | IIS ISAPI filter, uses `workers.properties`
 |===
 
-== Test plan
+== Test coverage
 
 === Test matrix
 
