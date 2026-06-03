@@ -9,6 +9,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * Servlet secured by the Elytron EXTERNAL authentication mechanism.
+ * Returns the authenticated user's name and the WildFly worker node name
+ * as plain text, which tests parse to verify REMOTE_USER propagation.
+ *
+ * <p>Security constraints are declared in {@code web.xml} with
+ * {@code <auth-method>EXTERNAL</auth-method>} and role {@code gooduser}.
+ */
 @WebServlet("/secured")
 public class SecuredServlet extends HttpServlet {
 

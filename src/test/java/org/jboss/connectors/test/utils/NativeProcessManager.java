@@ -19,6 +19,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * Manages a native OS process (WildFly server or httpd) for test execution.
+ *
+ * <p>Provides process lifecycle ({@link #start()}, {@link #stop()}, {@link #kill()}),
+ * startup detection via log polling ({@link #waitForStartup(String, Duration)}),
+ * and a static utility for running short-lived commands ({@link #execCommand(Path, String...)}).
+ *
+ * <p>Stdout and stderr are merged into {@code process-output.log} in the working directory.
+ * A JVM shutdown hook ensures all tracked processes are destroyed on exit, preventing
+ * orphaned httpd or WildFly processes from holding ports.
+ *
+ * <p>On Windows, {@link #stop()} destroys the entire process tree (descendants first)
+ * because batch scripts like {@code standalone.bat} spawn child {@code java.exe} processes
+ * that are not killed when the parent {@code cmd.exe} is destroyed.
+ */
 public class NativeProcessManager {
 
     private static final Logger log = LoggerFactory.getLogger(NativeProcessManager.class);

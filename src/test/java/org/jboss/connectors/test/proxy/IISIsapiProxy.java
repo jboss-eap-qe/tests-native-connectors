@@ -84,6 +84,12 @@ public class IISIsapiProxy implements AjpProxy {
         }
 
         try {
+            archiveConfigs();
+        } catch (Exception e) {
+            log.warn("Failed to archive IIS configs: {}", e.getMessage());
+        }
+
+        try {
             cleanup();
         } catch (Exception e) {
             log.warn("Error during IIS cleanup: {}", e.getMessage());
@@ -169,6 +175,27 @@ public class IISIsapiProxy implements AjpProxy {
             appcmd("set", "config", "Default Web Site",
                     "/section:anonymousAuthentication", "/enabled:false");
         }
+    }
+
+    private void archiveConfigs() throws IOException {
+        Path archiveDir = Path.of("target", "iis-config");
+        Files.createDirectories(archiveDir);
+        for (String name : new String[]{"workers.properties", "uriworkermap.properties",
+                "isapi_redirect.properties", "isapi_redirect.log"}) {
+            Path src = isapiDir.resolve(name);
+            if (Files.exists(src)) {
+                Files.copy(src, archiveDir.resolve(name),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        // Export IIS site config
+        try {
+            CommandResult result = exec(APPCMD, "list", "config", "Default Web Site");
+            Files.writeString(archiveDir.resolve("iis-site-config.xml"), result.getStdout());
+        } catch (Exception e) {
+            log.debug("Could not export IIS config: {}", e.getMessage());
+        }
+        log.info("IIS configs archived to {}", archiveDir);
     }
 
     private void cleanup() throws Exception {
