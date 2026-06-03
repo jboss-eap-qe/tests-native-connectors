@@ -104,9 +104,4 @@ public class LdapAuthConfigurator {
         log.info("Elytron EXTERNAL + LDAP realm configured on worker '{}' (ldap port {})",
                 worker.getName(), ldapPort);
     }
-
-    /** @see AjpListenerSetup#addAjpListener(WildFlyWorker) */
-    public int addAjpListener(WildFlyWorker worker) throws Exception {
-        return AjpListenerSetup.addAjpListener(worker);
-    }
 }

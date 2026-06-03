@@ -49,7 +49,7 @@ public class LdapAuthPropagationTest {
         try {
             LdapAuthConfigurator configurator = new LdapAuthConfigurator();
             configurator.configureElytron(worker, ldapServer.getPort());
-            int ajpPort = configurator.addAjpListener(worker);
+            int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
             File securedWar = SecuredAppBuilder.createSecuredApp();
             worker.deploy(securedWar);
@@ -89,7 +89,7 @@ public class LdapAuthPropagationTest {
         try {
             LdapAuthConfigurator configurator = new LdapAuthConfigurator();
             configurator.configureElytron(worker, ldapServer.getPort());
-            int ajpPort = configurator.addAjpListener(worker);
+            int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
             File securedWar = SecuredAppBuilder.createSecuredApp();
             worker.deploy(securedWar);
@@ -127,7 +127,7 @@ public class LdapAuthPropagationTest {
         try {
             LdapAuthConfigurator configurator = new LdapAuthConfigurator();
             configurator.configureElytron(worker, ldapServer.getPort());
-            int ajpPort = configurator.addAjpListener(worker);
+            int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
             File securedWar = SecuredAppBuilder.createSecuredApp();
             worker.deploy(securedWar);

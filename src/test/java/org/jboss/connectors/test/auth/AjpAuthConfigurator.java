@@ -86,11 +86,6 @@ public class AjpAuthConfigurator {
         log.info("Elytron EXTERNAL mechanism configured on worker '{}'", worker.getName());
     }
 
-    /** @see AjpListenerSetup#addAjpListener(WildFlyWorker) */
-    public int addAjpListener(WildFlyWorker worker) throws Exception {
-        return AjpListenerSetup.addAjpListener(worker);
-    }
-
     /** A username-to-role mapping for the Elytron filesystem realm. */
     public static class UserEntry {
         final String username;

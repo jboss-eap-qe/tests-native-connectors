@@ -40,7 +40,7 @@ public class AjpAuthPropagationTest {
         AjpAuthConfigurator configurator = new AjpAuthConfigurator();
         configurator.configureElytron(worker,
                 new AjpAuthConfigurator.UserEntry("testuser", "gooduser"));
-        int ajpPort = configurator.addAjpListener(worker);
+        int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
         File securedWar = SecuredAppBuilder.createSecuredApp();
         worker.deploy(securedWar);
@@ -74,7 +74,7 @@ public class AjpAuthPropagationTest {
         AjpAuthConfigurator configurator = new AjpAuthConfigurator();
         configurator.configureElytron(worker,
                 new AjpAuthConfigurator.UserEntry("testuser", "gooduser"));
-        int ajpPort = configurator.addAjpListener(worker);
+        int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
         File securedWar = SecuredAppBuilder.createSecuredApp();
         worker.deploy(securedWar);
@@ -107,7 +107,7 @@ public class AjpAuthPropagationTest {
         configurator.configureElytron(worker,
                 new AjpAuthConfigurator.UserEntry("testuser", "gooduser"),
                 new AjpAuthConfigurator.UserEntry("baduser", "badrole"));
-        int ajpPort = configurator.addAjpListener(worker);
+        int ajpPort = AjpListenerSetup.addAjpListener(worker);
 
         File securedWar = SecuredAppBuilder.createSecuredApp();
         worker.deploy(securedWar);
