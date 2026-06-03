@@ -2,6 +2,11 @@ package org.jboss.connectors.test.utils;
 
 import java.time.Duration;
 
+/**
+ * Centralized timeout constants for the test suite.
+ * Each value can be overridden via a system property (e.g. {@code -Dtest.timeout.boot.ms=240000})
+ * to accommodate slow CI nodes without code changes.
+ */
 public final class TestTimeouts {
 
     private TestTimeouts() {

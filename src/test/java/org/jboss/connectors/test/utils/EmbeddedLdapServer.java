@@ -11,7 +11,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * In-memory LDAP server for testing Elytron ldap-realm integration.
- * Simulates Active Directory with users in ou=People and role groups in ou=Groups.
+ *
+ * <p>Simulates an Active Directory-style directory with:
+ * <ul>
+ *   <li>{@code ou=People,dc=test,dc=local} — user entries ({@code inetOrgPerson})</li>
+ *   <li>{@code ou=Groups,dc=test,dc=local} — role groups ({@code groupOfNames} with {@code member} attribute)</li>
+ * </ul>
+ *
+ * <p>Pre-populated with two users: {@code testuser} (member of group {@code gooduser})
+ * and {@code baduser} (member of group {@code badrole}). The group {@code cn} maps to
+ * the Elytron role name via {@code attribute-mapping} in the ldap-realm.
+ *
+ * <p>Uses port 0 by default (OS-assigned) to avoid conflicts between tests.
+ * The actual port is available via {@link #getPort()} after {@link #start()}.
+ *
+ * @see org.jboss.connectors.test.auth.LdapAuthConfigurator
  */
 public class EmbeddedLdapServer {
 

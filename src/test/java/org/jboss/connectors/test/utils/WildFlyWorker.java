@@ -24,8 +24,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Native WildFly worker for connector testing.
- * Runs WildFly as a local OS process, no Docker.
+ * Manages a native WildFly/EAP server process for connector testing.
+ *
+ * <p>Lifecycle: extracts the distribution ZIP via {@link NativeServerExtractor},
+ * starts the server with a port offset via {@link NativePortAllocator}, and provides
+ * a Creaper {@link OnlineManagementClient} for Elytron and Undertow configuration.
+ *
+ * <p>Each test gets a clean server state — {@code standalone.xml} is restored
+ * from backup and runtime data directories are deleted before startup.
+ *
+ * <p>Injected into tests by {@link org.jboss.connectors.test.base.ConnectorTestExtension}.
+ *
+ * @see NativeServerExtractor
+ * @see NativePortAllocator
  */
 public class WildFlyWorker {
 

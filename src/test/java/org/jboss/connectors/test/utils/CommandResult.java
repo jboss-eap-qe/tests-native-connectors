@@ -1,5 +1,12 @@
 package org.jboss.connectors.test.utils;
 
+/**
+ * Immutable result of executing a native OS command.
+ * Captures exit code, stdout, and stderr separately so callers can
+ * inspect success/failure and parse output without re-executing.
+ *
+ * @see NativeProcessManager#execCommand(java.nio.file.Path, String...)
+ */
 public class CommandResult {
 
     private final int exitCode;

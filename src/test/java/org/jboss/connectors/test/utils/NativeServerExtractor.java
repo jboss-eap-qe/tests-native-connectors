@@ -17,6 +17,25 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * Extracts a WildFly or EAP distribution ZIP to a per-instance directory
+ * under {@code target/native-servers/}.
+ *
+ * <p>Each worker gets its own extracted copy because tests modify the
+ * configuration (Elytron realms, AJP listeners, deployments) and these
+ * changes persist in {@code standalone.xml}. The original config is backed up
+ * during extraction and restored by {@link WildFlyWorker} before each test.
+ *
+ * <p>ZIP location priority:
+ * <ol>
+ *   <li>{@code -Dwildfly.zip.path} system property</li>
+ *   <li>{@code WILDFLY_ZIP_PATH} environment variable</li>
+ *   <li>Auto-detect from {@code distributions/*.zip}</li>
+ * </ol>
+ *
+ * <p>Post-extraction setup: makes {@code bin/*.sh} executable (POSIX only)
+ * and creates a management user ({@code admin/admin}) for Creaper connections.
+ */
 public final class NativeServerExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(NativeServerExtractor.class);

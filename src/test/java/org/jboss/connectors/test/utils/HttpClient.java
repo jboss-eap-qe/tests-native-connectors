@@ -11,6 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * HTTP client for making requests through the AJP proxy and verifying responses.
+ * Wraps OkHttp with {@code Connection: close} headers to ensure each request
+ * gets a fresh connection for accurate proxy testing.
+ *
+ * <p>Injected into tests by {@link org.jboss.connectors.test.base.ConnectorTestExtension}.
+ */
 public class HttpClient {
 
     private static final Logger log = LoggerFactory.getLogger(HttpClient.class);
