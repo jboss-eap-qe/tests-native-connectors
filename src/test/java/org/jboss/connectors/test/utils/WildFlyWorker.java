@@ -100,15 +100,11 @@ public class WildFlyWorker {
     }
 
     public String getHttpUrl() {
-        return "http://localhost:" + NativePortAllocator.httpPort(name);
+        return "http://localhost:" + NativePortAllocator.resolveHttpPort(name);
     }
 
     public String getManagementUrl() {
-        return "http://localhost:" + NativePortAllocator.managementPort(name);
-    }
-
-    public int getManagementPort() {
-        return NativePortAllocator.managementPort(name);
+        return "http://localhost:" + NativePortAllocator.resolveManagementPort(name);
     }
 
     public Path getServerHome() {
@@ -120,7 +116,7 @@ public class WildFlyWorker {
     public OnlineManagementClient getManagementClient() throws IOException {
         if (managementClient == null) {
             managementClient = ManagementClientFactory.create(
-                    "localhost", NativePortAllocator.managementPort(name));
+                    "localhost", NativePortAllocator.resolveManagementPort(name));
         }
         return managementClient;
     }
@@ -254,7 +250,7 @@ public class WildFlyWorker {
         cmd.add("-bmanagement");
         cmd.add("0.0.0.0");
         cmd.add("-Djboss.node.name=" + name);
-        cmd.add("-Djboss.socket.binding.port-offset=" + NativePortAllocator.offset(name));
+        cmd.add("-Djboss.socket.binding.port-offset=" + NativePortAllocator.resolvePortOffset(name));
 
         return cmd;
     }

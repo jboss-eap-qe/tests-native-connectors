@@ -39,7 +39,13 @@ public final class NativePortAllocator {
     private NativePortAllocator() {
     }
 
-    public static int offset(String name) {
+    /**
+     * Get the port offset for a named instance.
+     *
+     * @param name instance name (e.g. "worker1")
+     * @return the offset value to pass to {@code -Djboss.socket.binding.port-offset}
+     */
+    public static int resolvePortOffset(String name) {
         Integer offset = OFFSETS.get(name);
         if (offset == null) {
             throw new IllegalArgumentException("Unknown instance name: '" + name
@@ -48,15 +54,18 @@ public final class NativePortAllocator {
         return offset;
     }
 
-    public static int httpPort(String name) {
-        return BASE_HTTP + offset(name);
+    /** Get the HTTP port for a named instance (base 8080 + offset). */
+    public static int resolveHttpPort(String name) {
+        return BASE_HTTP + resolvePortOffset(name);
     }
 
-    public static int httpsPort(String name) {
-        return BASE_HTTPS + offset(name);
+    /** Get the HTTPS port for a named instance (base 8443 + offset). */
+    public static int resolveHttpsPort(String name) {
+        return BASE_HTTPS + resolvePortOffset(name);
     }
 
-    public static int managementPort(String name) {
-        return BASE_MANAGEMENT + offset(name);
+    /** Get the management port for a named instance (base 9990 + offset). */
+    public static int resolveManagementPort(String name) {
+        return BASE_MANAGEMENT + resolvePortOffset(name);
     }
 }

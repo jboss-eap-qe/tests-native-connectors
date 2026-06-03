@@ -4,8 +4,6 @@ import org.jboss.connectors.test.utils.WildFlyWorker;
 import org.jboss.dmr.ModelNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wildfly.extras.creaper.commands.socketbindings.AddSocketBinding;
-import org.wildfly.extras.creaper.commands.undertow.AddUndertowListener;
 import org.wildfly.extras.creaper.core.online.ModelNodeResult;
 import org.wildfly.extras.creaper.core.online.operations.Address;
 import org.wildfly.extras.creaper.core.online.operations.Operations;
@@ -24,10 +22,6 @@ public class AjpAuthConfigurator {
     private static final String SECURITY_DOMAIN_NAME = "ajp-auth-sd";
     private static final String AUTH_FACTORY_NAME = "ajp-auth-factory";
     private static final String APP_SECURITY_DOMAIN = "ajp-auth-domain";
-
-    private static final int AJP_PORT = 8019;
-    private static final String AJP_SOCKET_BINDING = "ajp-test";
-    private static final String AJP_LISTENER = "ajp-test-listener";
 
     /**
      * Configure Elytron EXTERNAL mechanism on a worker.
@@ -92,35 +86,12 @@ public class AjpAuthConfigurator {
         log.info("Elytron EXTERNAL mechanism configured on worker '{}'", worker.getName());
     }
 
-    /**
-     * Add an AJP listener to the worker.
-     *
-     * @return the AJP port (including port offset)
-     */
+    /** @see AjpListenerSetup#addAjpListener(WildFlyWorker) */
     public int addAjpListener(WildFlyWorker worker) throws Exception {
-        Operations ops = worker.getOperations();
-
-        Address sbAddr = Address.of("socket-binding-group", "standard-sockets")
-                .and("socket-binding", AJP_SOCKET_BINDING);
-        if (!ops.exists(sbAddr)) {
-            worker.getManagementClient().apply(
-                    new AddSocketBinding.Builder(AJP_SOCKET_BINDING).port(AJP_PORT).build());
-        }
-
-        Address listenerAddr = Address.subsystem("undertow")
-                .and("server", "default-server")
-                .and("ajp-listener", AJP_LISTENER);
-        if (!ops.exists(listenerAddr)) {
-            worker.getManagementClient().apply(
-                    new AddUndertowListener.AjpBuilder(AJP_LISTENER, "default-server", AJP_SOCKET_BINDING).build());
-            worker.reload();
-        }
-
-        int ajpPort = AJP_PORT + org.jboss.connectors.test.utils.NativePortAllocator.offset(worker.getName());
-        log.info("AJP listener on port {} ready", ajpPort);
-        return ajpPort;
+        return AjpListenerSetup.addAjpListener(worker);
     }
 
+    /** A username-to-role mapping for the Elytron filesystem realm. */
     public static class UserEntry {
         final String username;
         final String role;

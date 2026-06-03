@@ -51,12 +51,14 @@ public class ConnectorTestExtension implements BeforeEachCallback, AfterEachCall
         log.info("=== Finished test: {} ===", context.getDisplayName());
     }
 
+    /** Supports injection of {@link WildFlyWorker} and {@link HttpClient} test method parameters. */
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         Class<?> type = parameterContext.getParameter().getType();
         return type == WildFlyWorker.class || type == HttpClient.class;
     }
 
+    /** Resolves the requested parameter from the per-test store (worker or HTTP client). */
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         Class<?> type = parameterContext.getParameter().getType();

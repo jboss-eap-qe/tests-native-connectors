@@ -32,10 +32,12 @@ public class HttpClient {
                 .build();
     }
 
+    /** Perform a GET request and return the response. */
     public HttpResponse get(String url) throws IOException {
         return get(url, new HashMap<>());
     }
 
+    /** Perform a GET request with custom headers. */
     public HttpResponse get(String url, Map<String, String> headers) throws IOException {
         headers.putIfAbsent("Connection", "close");
         Request.Builder builder = new Request.Builder().url(url);
@@ -51,6 +53,7 @@ public class HttpClient {
         }
     }
 
+    /** Perform a GET request with a session cookie (for sticky session testing). */
     public HttpResponse getWithSession(String url, String sessionCookie) throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", sessionCookie);
@@ -78,6 +81,7 @@ public class HttpClient {
         return headers;
     }
 
+    /** Response wrapper containing status code, body, cookies, and headers. */
     public static class HttpResponse {
         private final int statusCode;
         private final String body;
