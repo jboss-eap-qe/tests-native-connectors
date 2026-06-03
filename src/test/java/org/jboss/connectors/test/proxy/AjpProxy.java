@@ -7,9 +7,14 @@ package org.jboss.connectors.test.proxy;
 public interface AjpProxy {
 
     /**
-     * Create a proxy for the current platform.
-     * Linux: HttpdAjpProxy (mod_proxy_ajp).
-     * Windows: IISIsapiProxy (requires {@code -Disapi.redirect.dll.path}).
+     * Create a proxy for the current platform and connector type.
+     *
+     * <p>Selection logic:
+     * <ul>
+     *   <li>Windows: IISIsapiProxy (requires {@code -Disapi.redirect.dll.path})</li>
+     *   <li>Linux with {@code -Dmod.jk.path}: HttpdModJkProxy</li>
+     *   <li>Linux default: HttpdAjpProxy (mod_proxy_ajp)</li>
+     * </ul>
      */
     static AjpProxy create() {
         if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("win")) {
@@ -19,6 +24,9 @@ public interface AjpProxy {
                         "Set -Disapi.redirect.dll.path to the isapi_redirect.dll location");
             }
             return new IISIsapiProxy(java.nio.file.Path.of(dllPath));
+        }
+        if (System.getProperty("mod.jk.path") != null) {
+            return new HttpdModJkProxy();
         }
         return new HttpdAjpProxy();
     }
