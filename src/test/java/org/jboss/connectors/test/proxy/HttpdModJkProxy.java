@@ -77,8 +77,10 @@ public class HttpdModJkProxy extends AbstractHttpdProxy {
         String content = "worker.list=worker1\n" +
                 "worker.worker1.type=ajp13\n" +
                 "worker.worker1.host=" + host + "\n" +
-                "worker.worker1.port=" + workerAjpPort + "\n" +
-                "worker.worker1.secret=" + ajpSecret + "\n";
+                "worker.worker1.port=" + workerAjpPort + "\n";
+        if (ajpSecret != null) {
+            content += "worker.worker1.secret=" + ajpSecret + "\n";
+        }
         if (cpingEnabled) {
             content += "worker.worker1.ping_mode=A\n";
         }

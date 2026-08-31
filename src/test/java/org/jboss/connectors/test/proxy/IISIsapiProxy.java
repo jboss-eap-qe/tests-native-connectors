@@ -119,8 +119,10 @@ public class IISIsapiProxy implements AjpProxy {
         String workerProps = "worker.list=worker1\n" +
                 "worker.worker1.type=ajp13\n" +
                 "worker.worker1.host=" + workerHost + "\n" +
-                "worker.worker1.port=" + workerAjpPort + "\n" +
-                "worker.worker1.secret=" + ajpSecret + "\n";
+                "worker.worker1.port=" + workerAjpPort + "\n";
+        if (ajpSecret != null) {
+            workerProps += "worker.worker1.secret=" + ajpSecret + "\n";
+        }
         if (cpingEnabled) {
             workerProps += "worker.worker1.ping_mode=A\n";
         }

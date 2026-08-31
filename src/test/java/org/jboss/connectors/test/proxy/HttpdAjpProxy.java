@@ -42,7 +42,10 @@ public class HttpdAjpProxy extends AbstractHttpdProxy {
                 "log_config_module modules/mod_log_config.so");
 
         conf.append("ProxyPass /secured/ ajp://").append(workerHost).append(":").append(workerAjpPort)
-                .append("/secured/ secret=").append(ajpSecret);
+                .append("/secured/");
+        if (ajpSecret != null) {
+            conf.append(" secret=").append(ajpSecret);
+        }
         if (cpingEnabled) {
             conf.append(" ping=10");
         }

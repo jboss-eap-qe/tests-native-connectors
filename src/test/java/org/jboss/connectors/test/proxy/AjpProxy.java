@@ -46,7 +46,7 @@ public interface AjpProxy {
      * @param password the password for that user
      * @param workerHost the WildFly AJP listener host
      * @param workerAjpPort the WildFly AJP listener port
-     * @param ajpSecret the AJP secret shared with the WildFly listener
+     * @param ajpSecret the AJP secret shared with the WildFly listener, or {@code null} to omit
      */
     void configureAuth(String username, String password, String workerHost, int workerAjpPort,
                         String ajpSecret) throws Exception;
@@ -56,7 +56,7 @@ public interface AjpProxy {
      *
      * @param workerHost the WildFly AJP listener host
      * @param workerAjpPort the WildFly AJP listener port
-     * @param ajpSecret the AJP secret shared with the WildFly listener
+     * @param ajpSecret the AJP secret shared with the WildFly listener, or {@code null} to omit
      */
     void configureNoAuth(String workerHost, int workerAjpPort, String ajpSecret) throws Exception;
 

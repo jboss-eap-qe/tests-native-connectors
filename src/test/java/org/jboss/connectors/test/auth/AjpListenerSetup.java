@@ -27,11 +27,24 @@ final class AjpListenerSetup {
     }
 
     /**
-     * Add an AJP listener to the worker if not already present.
+     * Add an AJP listener with secret enforcement to the worker if not already present.
      *
      * @return the AJP port (base port + worker's port offset)
      */
     static int addAjpListener(WildFlyWorker worker) throws Exception {
+        return addAjpListener(worker, true);
+    }
+
+    /**
+     * Add an AJP listener without secret enforcement.
+     *
+     * @return the AJP port (base port + worker's port offset)
+     */
+    static int addAjpListenerNoSecret(WildFlyWorker worker) throws Exception {
+        return addAjpListener(worker, false);
+    }
+
+    private static int addAjpListener(WildFlyWorker worker, boolean withSecret) throws Exception {
         Operations ops = worker.getOperations();
 
         Address sbAddr = Address.of("socket-binding-group", "standard-sockets")
@@ -41,10 +54,12 @@ final class AjpListenerSetup {
                     new AddSocketBinding.Builder(AJP_SOCKET_BINDING).port(AJP_PORT).build());
         }
 
-        Address secretProp = Address.of("system-property", "io.undertow.ajp.AJP_SECRET");
-        if (!ops.exists(secretProp)) {
-            ops.add(secretProp, Values.of("value", AJP_SECRET)).assertSuccess();
-            worker.reload();
+        if (withSecret) {
+            Address secretProp = Address.of("system-property", "io.undertow.ajp.AJP_SECRET");
+            if (!ops.exists(secretProp)) {
+                ops.add(secretProp, Values.of("value", AJP_SECRET)).assertSuccess();
+                worker.reload();
+            }
         }
 
         Address listenerAddr = Address.subsystem("undertow")
@@ -56,7 +71,7 @@ final class AjpListenerSetup {
         }
 
         int ajpPort = AJP_PORT + NativePortAllocator.resolvePortOffset(worker.getName());
-        log.info("AJP listener on port {} ready", ajpPort);
+        log.info("AJP listener on port {} ready (secret={})", ajpPort, withSecret);
         return ajpPort;
     }
 }
