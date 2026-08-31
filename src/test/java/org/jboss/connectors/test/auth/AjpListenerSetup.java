@@ -60,6 +60,12 @@ final class AjpListenerSetup {
                 ops.add(secretProp, Values.of("value", AJP_SECRET)).assertSuccess();
                 worker.reload();
             }
+        } else {
+            Address requireProp = Address.of("system-property", "io.undertow.ajp.REQUIRE_AJP_SECRET");
+            if (!ops.exists(requireProp)) {
+                ops.add(requireProp, Values.of("value", "false")).assertSuccess();
+                worker.reload();
+            }
         }
 
         Address listenerAddr = Address.subsystem("undertow")
