@@ -32,35 +32,63 @@ final class AjpListenerSetup {
      * @return the AJP port (base port + worker's port offset)
      */
     static int addAjpListener(WildFlyWorker worker) throws Exception {
-        return addAjpListener(worker, true);
+        return addAjpListener(worker, true, true);
     }
 
     /**
      * Add an AJP listener without secret enforcement.
+     * Sets {@code REQUIRE_AJP_SECRET=false} and does not define {@code AJP_SECRET}.
      *
      * @return the AJP port (base port + worker's port offset)
      */
     static int addAjpListenerNoSecret(WildFlyWorker worker) throws Exception {
-        return addAjpListener(worker, false);
+        return addAjpListener(worker, false, false);
     }
 
-    private static int addAjpListener(WildFlyWorker worker, boolean withSecret) throws Exception {
-        Operations ops = worker.getOperations();
+    /**
+     * Add an AJP listener with the secret defined but startup requirement disabled.
+     * Sets {@code REQUIRE_AJP_SECRET=false} and {@code AJP_SECRET} to the test value.
+     *
+     * @return the AJP port (base port + worker's port offset)
+     */
+    static int addAjpListenerOptionalSecret(WildFlyWorker worker) throws Exception {
+        return addAjpListener(worker, true, false);
+    }
 
+    /**
+     * Create the AJP socket binding if it does not exist.
+     * Exposed for tests that need the binding without a full listener setup
+     * (e.g. testing UT000220 startup failure).
+     */
+    static void ensureSocketBinding(WildFlyWorker worker) throws Exception {
+        Operations ops = worker.getOperations();
         Address sbAddr = Address.of("socket-binding-group", "standard-sockets")
                 .and("socket-binding", AJP_SOCKET_BINDING);
         if (!ops.exists(sbAddr)) {
             worker.getManagementClient().apply(
                     new AddSocketBinding.Builder(AJP_SOCKET_BINDING).port(AJP_PORT).build());
         }
+    }
 
-        if (withSecret) {
+    static Address getListenerAddress() {
+        return Address.subsystem("undertow")
+                .and("server", "default-server")
+                .and("ajp-listener", AJP_LISTENER);
+    }
+
+    private static int addAjpListener(WildFlyWorker worker, boolean setSecret, boolean requireSecret) throws Exception {
+        Operations ops = worker.getOperations();
+
+        ensureSocketBinding(worker);
+
+        if (setSecret) {
             Address secretProp = Address.of("system-property", "io.undertow.ajp.AJP_SECRET");
             if (!ops.exists(secretProp)) {
                 ops.add(secretProp, Values.of("value", AJP_SECRET)).assertSuccess();
                 worker.reload();
             }
-        } else {
+        }
+        if (!requireSecret) {
             Address requireProp = Address.of("system-property", "io.undertow.ajp.REQUIRE_AJP_SECRET");
             if (!ops.exists(requireProp)) {
                 ops.add(requireProp, Values.of("value", "false")).assertSuccess();
@@ -68,16 +96,14 @@ final class AjpListenerSetup {
             }
         }
 
-        Address listenerAddr = Address.subsystem("undertow")
-                .and("server", "default-server")
-                .and("ajp-listener", AJP_LISTENER);
+        Address listenerAddr = getListenerAddress();
         if (!ops.exists(listenerAddr)) {
             ops.add(listenerAddr, Values.of("socket-binding", AJP_SOCKET_BINDING)).assertSuccess();
             worker.reload();
         }
 
         int ajpPort = AJP_PORT + NativePortAllocator.resolvePortOffset(worker.getName());
-        log.info("AJP listener on port {} ready (secret={})", ajpPort, withSecret);
+        log.info("AJP listener on port {} ready (secret={}, require={})", ajpPort, setSecret, requireSecret);
         return ajpPort;
     }
 }
