@@ -1,7 +1,6 @@
 package org.jboss.connectors.test.proxy;
 
 import org.jboss.connectors.test.utils.CommandResult;
-import org.jboss.connectors.test.utils.NativePortAllocator;
 import org.jboss.connectors.test.utils.NativeProcessManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +119,21 @@ abstract class AbstractHttpdProxy implements AjpProxy {
     @Override
     public String getHttpUrl() {
         return "http://localhost:" + listenPort;
+    }
+
+    @Override
+    public String getVersion() throws Exception {
+        String httpdBin = findHttpdBinary();
+        CommandResult result = NativeProcessManager.execCommand(workDir, httpdBin, "-v");
+        if (!result.isSuccess()) {
+            return "httpd version unknown";
+        }
+        for (String line : result.getStdout().split("\n")) {
+            if (line.startsWith("Server version:")) {
+                return line.substring("Server version:".length()).trim();
+            }
+        }
+        return result.getStdout().lines().findFirst().orElse("httpd version unknown");
     }
 
     /** {@inheritDoc} */

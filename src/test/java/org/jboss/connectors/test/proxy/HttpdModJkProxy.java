@@ -1,6 +1,8 @@
 package org.jboss.connectors.test.proxy;
 
+import org.jboss.connectors.test.utils.CommandResult;
 import org.jboss.connectors.test.utils.NativePortAllocator;
+import org.jboss.connectors.test.utils.NativeProcessManager;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +39,34 @@ public class HttpdModJkProxy extends AbstractHttpdProxy {
     public HttpdModJkProxy withCping() {
         this.cpingEnabled = true;
         return this;
+    }
+
+    @Override
+    public String getVersion() throws Exception {
+        String httpdVersion = super.getVersion();
+        String modJkVersion = extractModJkVersion();
+        if (modJkVersion != null) {
+            return httpdVersion + ", " + modJkVersion;
+        }
+        return httpdVersion;
+    }
+
+    private String extractModJkVersion() {
+        try {
+            CommandResult result = NativeProcessManager.execCommand(
+                    workDir, "strings", modJkPath.toAbsolutePath().toString());
+            if (result.isSuccess()) {
+                for (String line : result.getStdout().split("\n")) {
+                    if (line.contains("mod_jk/")) {
+                        int idx = line.indexOf("mod_jk/");
+                        return line.substring(idx).trim();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // strings not available
+        }
+        return null;
     }
 
     @Override

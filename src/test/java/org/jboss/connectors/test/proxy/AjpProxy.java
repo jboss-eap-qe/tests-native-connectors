@@ -69,6 +69,9 @@ public interface AjpProxy {
 
     String getHttpUrl();
 
+    /** Return a human-readable version string for the proxy and its connector module. */
+    String getVersion() throws Exception;
+
     /** Archive proxy configuration files to the given directory for post-test debugging. */
     void archiveConfigs(Path targetDir) throws Exception;
 }

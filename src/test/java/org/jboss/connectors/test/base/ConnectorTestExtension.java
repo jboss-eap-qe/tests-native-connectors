@@ -19,14 +19,24 @@ import java.nio.file.Path;
  * <p>After each test, archives all configs (WildFly standalone.xml + proxy configs) under
  * {@code target/archived-configs/{testName}/}, then stops proxy and worker.
  */
-public class ConnectorTestExtension implements BeforeEachCallback, AfterEachCallback,
-        ParameterResolver {
+public class ConnectorTestExtension implements BeforeAllCallback, BeforeEachCallback,
+        AfterEachCallback, ParameterResolver {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectorTestExtension.class);
 
     private static final String WORKER_KEY = "worker";
     private static final String PROXY_KEY = "proxy";
     private static final String HTTP_CLIENT_KEY = "httpClient";
+
+    @Override
+    public void beforeAll(ExtensionContext context) {
+        try {
+            AjpProxy probe = AjpProxy.create();
+            log.info("Connector version: {}", probe.getVersion());
+        } catch (Exception e) {
+            log.warn("Could not determine connector version: {}", e.getMessage());
+        }
+    }
 
     /** Create and start a WildFly worker, AJP proxy, and HTTP client for the test. */
     @Override

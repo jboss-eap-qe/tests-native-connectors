@@ -111,6 +111,15 @@ public class IISIsapiProxy implements AjpProxy {
         return "http://localhost";
     }
 
+    @Override
+    public String getVersion() throws Exception {
+        String cmd = "(Get-Item '" + dllPath.toAbsolutePath() + "').VersionInfo.FileVersion";
+        CommandResult result = NativeProcessManager.execCommand(
+                Path.of("."), "powershell.exe", "-Command", cmd);
+        String version = result.isSuccess() ? result.getStdout().trim() : "unknown";
+        return "IIS, isapi_redirect/" + version;
+    }
+
     private void prepareIsapiDir(String workerHost, int workerAjpPort, String ajpSecret) throws IOException {
         Files.createDirectories(isapiDir);
         Files.copy(dllPath, isapiDir.resolve("isapi_redirect.dll"),
