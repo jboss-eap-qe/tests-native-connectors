@@ -124,7 +124,7 @@ abstract class AbstractHttpdProxy implements AjpProxy {
     @Override
     public String getVersion() throws Exception {
         String httpdBin = findHttpdBinary();
-        CommandResult result = NativeProcessManager.execCommand(workDir, httpdBin, "-v");
+        CommandResult result = NativeProcessManager.execCommand(Path.of("."), httpdBin, "-v");
         if (!result.isSuccess()) {
             return "httpd version unknown";
         }
