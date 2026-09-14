@@ -249,7 +249,8 @@ Install-WindowsFeature Web-Server, Web-Basic-Auth, Web-ISAPI-Filter, Web-ISAPI-E
 The connectors tested here use AJP as the transport protocol between the proxy and WildFly/EAP:
 
 * *mod_proxy_ajp* — built-in httpd module, part of the JBCS httpd distribution
-* *mod_jk* / *isapi_redirect* — from the JBCS webserver-connectors ZIP (Apache Tomcat Connectors / JK project); mod_jk is the httpd module, isapi_redirect is the IIS equivalent
+* *mod_jk* — httpd module from the Apache Tomcat Connectors (JK) project, bundled in the JBCS httpd distribution
+* *isapi_redirect* — IIS equivalent of mod_jk, shipped in a separate JBCS webserver-connectors ZIP
 
 A related but separate component is *mod_proxy_cluster* (mod_cluster), which adds dynamic load
 balancing and worker discovery on top of the proxy layer. mod_proxy_cluster can use either AJP or
