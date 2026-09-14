@@ -43,18 +43,18 @@ public class HttpdModJkProxy extends AbstractHttpdProxy {
 
     @Override
     public String getVersion() throws Exception {
-        String httpdVersion = super.getVersion();
         String modJkVersion = extractModJkVersion();
+        String httpdVersion = super.getVersion();
         if (modJkVersion != null) {
-            return httpdVersion + ", " + modJkVersion;
+            return modJkVersion + ", " + httpdVersion;
         }
-        return httpdVersion;
+        return "mod_jk (version unknown), " + httpdVersion;
     }
 
     private String extractModJkVersion() {
         try {
             CommandResult result = NativeProcessManager.execCommand(
-                    workDir, "strings", modJkPath.toAbsolutePath().toString());
+                    Path.of("."), "strings", modJkPath.toAbsolutePath().toString());
             if (result.isSuccess()) {
                 for (String line : result.getStdout().split("\n")) {
                     if (line.contains("mod_jk/")) {

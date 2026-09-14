@@ -20,6 +20,11 @@ public class HttpdAjpProxy extends AbstractHttpdProxy {
     }
 
     @Override
+    public String getVersion() throws Exception {
+        return "mod_proxy_ajp, " + super.getVersion();
+    }
+
+    @Override
     public HttpdAjpProxy withCping() {
         this.cpingEnabled = true;
         return this;
